@@ -3,7 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:biometrics_change_checker/biometrics_change_checker_method_channel.dart';
 
 void main() {
-  MethodChannelBiometricsChangeChecker platform = MethodChannelBiometricsChangeChecker();
+  MethodChannelBiometricsChangeChecker platform =
+      MethodChannelBiometricsChangeChecker();
   const MethodChannel channel = MethodChannel('biometrics_change_checker');
 
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -19,6 +20,6 @@ void main() {
   });
 
   test('getPlatformVersion', () async {
-    expect(await platform.getPlatformVersion(), '42');
+    expect(await platform.didBiometricsChanged(), '42');
   });
 }
