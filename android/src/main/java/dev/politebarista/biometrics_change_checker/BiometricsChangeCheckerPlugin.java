@@ -35,9 +35,8 @@ public class BiometricsChangeCheckerPlugin implements FlutterPlugin, MethodCallH
   }
 
   @Override
-  public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {   
-    KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
-    keyStore.load(null);
+  public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
+    initKeyStore();
 
     Log.d(TAG, "attached to engine");
 
@@ -68,12 +67,15 @@ public class BiometricsChangeCheckerPlugin implements FlutterPlugin, MethodCallH
   private boolean didBiometicsChanged() throws GeneralSecurityException, IOException {
     Cipher cipher = getCipher();
 
-    SecretKey key = (SecretKey)keyStore.getKey(keyName, null);
+    if (keyStore == null)
+      initKeyStore();
+
+    SecretKey key = (SecretKey) keyStore.getKey(keyName, null);
 
     if (key == null)
       generateKey();
 
-    key = (SecretKey)keyStore.getKey(keyName, null);
+    key = (SecretKey) keyStore.getKey(keyName, null);
 
     try {
       cipher.init(Cipher.ENCRYPT_MODE, key);
@@ -88,16 +90,25 @@ public class BiometricsChangeCheckerPlugin implements FlutterPlugin, MethodCallH
     }
   }
 
+  private void initKeyStore() {
+    try {
+      KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+      keyStore.load(null);
+    } catch (Exception e) {
+      Log.d(TAG, "Exception: " + e.getMessage());
+    }
+  }
+
   private void generateKey() throws GeneralSecurityException {
     KeyGenerator keyGenerator = KeyGenerator.getInstance("AES", "AndroidKeyStore");
-      keyGenerator.init(new KeyGenParameterSpec.Builder(
-          keyName,
-          KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
-          .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
-          .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
-          .setInvalidatedByBiometricEnrollment(true)
-          .setUserAuthenticationRequired(true)
-          .build());
-      keyGenerator.generateKey();
+    keyGenerator.init(new KeyGenParameterSpec.Builder(
+        keyName,
+        KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
+        .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
+        .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
+        .setInvalidatedByBiometricEnrollment(true)
+        .setUserAuthenticationRequired(true)
+        .build());
+    keyGenerator.generateKey();
   }
 }
