@@ -1,7 +1,7 @@
-import 'package:biometrics_change_checker/utils/biometrics_change_status.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'biometrics_change_checker_method_channel.dart';
+import 'utils/biometrics_change_status.dart';
 
 abstract class BiometricsChangeCheckerPlatform extends PlatformInterface {
   /// Constructs a BiometricsChangeCheckerPlatform.

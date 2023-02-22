@@ -1,11 +1,11 @@
 import 'dart:developer';
 import 'dart:io';
 
-import 'package:biometrics_change_checker/utils/biometrics_change_status.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import 'biometrics_change_checker_platform_interface.dart';
+import 'utils/biometrics_change_status.dart';
 
 /// An implementation of [BiometricsChangeCheckerPlatform] that uses method channels.
 class MethodChannelBiometricsChangeChecker
