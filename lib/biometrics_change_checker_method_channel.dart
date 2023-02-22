@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:biometrics_change_checker/utils/biometrics_change_status.dart';
 import 'package:flutter/foundation.dart';
@@ -15,6 +16,7 @@ class MethodChannelBiometricsChangeChecker
 
   @override
   Future<BiometricsChangeStatus> didBiometricsChanged() async {
+    if(Platform.isAndroid) {
     try {
       final result =
           await methodChannel.invokeMethod<bool>('didBiometricsChanged');
@@ -24,6 +26,12 @@ class MethodChannelBiometricsChangeChecker
     } on PlatformException catch (e) {
       log(e.message.toString());
       return BiometricsChangeStatus.invalid;
+    } }
+    else if(Platform.isIOS) {
+      //TODO: ios
+      throw UnimplementedError();
+    } else {
+      throw UnimplementedError();
     }
   }
 }

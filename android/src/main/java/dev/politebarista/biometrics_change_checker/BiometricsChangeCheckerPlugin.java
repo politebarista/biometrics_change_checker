@@ -23,17 +23,24 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 
 public class BiometricsChangeCheckerPlugin implements FlutterPlugin, MethodCallHandler {
-  private MethodChannel channel;
-
   private static final String TAG = "BiometricsChangeCheckerPlugin";
   private static final String keyName = "biometrics_change";
+
+  private MethodChannel channel;
+
+  private KeyStore keyStore;
 
   private Cipher getCipher() throws GeneralSecurityException {
     return Cipher.getInstance("AES/CBC/PKCS7Padding");
   }
 
   @Override
-  public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
+  public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {   
+    KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+    keyStore.load(null);
+
+    Log.d(TAG, "attached to engine");
+
     channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), "biometrics_change_checker");
     channel.setMethodCallHandler(this);
   }
@@ -45,6 +52,7 @@ public class BiometricsChangeCheckerPlugin implements FlutterPlugin, MethodCallH
         boolean didBiometricsChanged = didBiometicsChanged();
         result.success(didBiometricsChanged);
       } catch (Exception e) {
+        Log.d(TAG, "Exception: " + e.getMessage());
         result.error("error", e.getMessage(), e);
       }
     } else {
@@ -60,21 +68,18 @@ public class BiometricsChangeCheckerPlugin implements FlutterPlugin, MethodCallH
   private boolean didBiometicsChanged() throws GeneralSecurityException, IOException {
     Cipher cipher = getCipher();
 
-    KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
-    keyStore.load(null);
-
-    SecretKey key = (SecretKey) keyStore.getKey(keyName, null);
+    SecretKey key = (SecretKey)keyStore.getKey(keyName, null);
 
     if (key == null)
       generateKey();
 
-    key = (SecretKey) keyStore.getKey(keyName, null);
+    key = (SecretKey)keyStore.getKey(keyName, null);
 
     try {
       cipher.init(Cipher.ENCRYPT_MODE, key);
       return false;
     } catch (KeyPermanentlyInvalidatedException e) {
-      Log.d(TAG, "Exception: ${e,message}");
+      Log.d(TAG, "Exception: " + e.getMessage());
 
       keyStore.deleteEntry(keyName);
       generateKey();
