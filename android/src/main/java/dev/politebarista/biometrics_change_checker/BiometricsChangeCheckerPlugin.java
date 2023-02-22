@@ -28,16 +28,12 @@ public class BiometricsChangeCheckerPlugin implements FlutterPlugin, MethodCallH
 
   private MethodChannel channel;
 
-  private KeyStore keyStore;
-
   private Cipher getCipher() throws GeneralSecurityException {
     return Cipher.getInstance("AES/CBC/PKCS7Padding");
   }
 
   @Override
   public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
-    initKeyStore();
-
     Log.d(TAG, "attached to engine");
 
     channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), "biometrics_change_checker");
@@ -67,8 +63,8 @@ public class BiometricsChangeCheckerPlugin implements FlutterPlugin, MethodCallH
   private boolean didBiometicsChanged() throws GeneralSecurityException, IOException {
     Cipher cipher = getCipher();
 
-    if (keyStore == null)
-      initKeyStore();
+    KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+    keyStore.load(null);
 
     SecretKey key = (SecretKey) keyStore.getKey(keyName, null);
 
@@ -81,21 +77,12 @@ public class BiometricsChangeCheckerPlugin implements FlutterPlugin, MethodCallH
       cipher.init(Cipher.ENCRYPT_MODE, key);
       return false;
     } catch (KeyPermanentlyInvalidatedException e) {
-      Log.d(TAG, "Exception: " + e.getMessage());
+      Log.d(TAG, "Biometrics setting was changed");
 
       keyStore.deleteEntry(keyName);
       generateKey();
 
       return true;
-    }
-  }
-
-  private void initKeyStore() {
-    try {
-      KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
-      keyStore.load(null);
-    } catch (Exception e) {
-      Log.d(TAG, "Exception: " + e.getMessage());
     }
   }
 
