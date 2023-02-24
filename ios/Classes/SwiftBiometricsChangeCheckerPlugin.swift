@@ -3,6 +3,7 @@ import UIKit
 import LocalAuthentication
 import Security
 
+// TODO: format the code
 public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
   public static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(name: "biometrics_change_checker", binaryMessenger: registrar.messenger())
@@ -14,30 +15,7 @@ public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
       let context = LAContext()
       var authError : NSError?
       
-      print("updated code")
-      // let addQuery: [String: Any] = [
-      //   kSecClass as String: kSecClassKey,
-      //   kSecValueData as String: "token-example-testing".data(using: .utf8)
-      // ]
-      
-      // let addingToKeychainStatus = SecItemAdd(
-      //   addQuery as CFDictionary,
-      //   nil
-      // )
-      
-      // guard addingToKeychainStatus != errSecDuplicateItem else {
-      //     print("duplicate")
-      //     return
-      // }
-      
-      // guard addingToKeychainStatus == errSecSuccess else {
-      //     print("unknown error \(addingToKeychainStatus)")
-      //     return
-      // }
-      
-      // print("saved successfully")
-      
-      guard let data = getToken() else {
+      guard let data = getBiometricsTokenFromKeychain() else {
         print("failed to read data")
         return
       }
@@ -59,7 +37,9 @@ public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
       }
   }
 
-    public func getToken() -> String? {
+    // TODO: I think need to make it private
+    public func getBiometricsTokenFromKeychain() -> String? {
+      // TODO: delete comments
        let getQuery: [String: Any] = [
          kSecClass as String: kSecClassKey,
          kSecReturnData as String: kCFBooleanTrue,
@@ -75,16 +55,29 @@ public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
         print("getting item is completed\nitem - \(item)")
 
         return item == nil ? nil : String(decoding: (item! as? Data)!, as: UTF8.self)
+    }
 
-//
-//        print(gettingFromKeychainStatus)
-//        guard item as? Data != nil else {
-//          print("item is nil")
-//          return
-//        }
-//
-//        let data = item! as? Data
-//        let password = String(decoding: data, as: UTF8.self)
-//        print("item is \(password)")
+    public func saveBiometricsTokenInKeyChain(token: String) {
+      let addQuery: [String: Any] = [
+        kSecClass as String: kSecClassKey,
+        kSecValueData as String: token.data(using: .utf8)
+      ]
+      
+      let addingToKeychainStatus = SecItemAdd(
+        addQuery as CFDictionary,
+        nil
+      )
+      
+      guard addingToKeychainStatus != errSecDuplicateItem else {
+          print("duplicate")
+          return
+      }
+      
+      guard addingToKeychainStatus == errSecSuccess else {
+          print("unknown error \(addingToKeychainStatus)")
+          return
+      }
+      
+      print("saved successfully")
     }
 }
