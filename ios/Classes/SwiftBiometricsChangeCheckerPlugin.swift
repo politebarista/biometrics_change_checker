@@ -42,8 +42,8 @@ public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
         return
       }
       print("data \(data)")
-      let token = String(decoding: data, as: UTF8.self)
-      print("token \(token)")
+      // let token = String(decoding: data, as: UTF8.self)
+      // print("token \(token)")
 
       if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &authError) == false {
         result(FlutterError(code: "unknown", message: nil, details: nil))
@@ -59,7 +59,7 @@ public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
       }
   }
 
-    public func getToken() -> Data? {
+    public func getToken() -> String? {
        let getQuery: [String: Any] = [
          kSecClass as String: kSecClassKey,
          kSecReturnData as String: kCFBooleanTrue,
@@ -74,7 +74,7 @@ public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
        )
         print("getting item is completed\nitem - \(item)")
 
-        return item as? Data
+        return item == nil ? nil : String(decoding: (item! as? Data)!, as: UTF8.self)
 
 //
 //        print(gettingFromKeychainStatus)
