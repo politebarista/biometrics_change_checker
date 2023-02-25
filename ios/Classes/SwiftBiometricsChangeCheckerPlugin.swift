@@ -4,6 +4,7 @@ import LocalAuthentication
 import Security
 
 // TODO: format the code
+// TODO: delete comments
 public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
   public static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(name: "biometrics_change_checker", binaryMessenger: registrar.messenger())
@@ -11,35 +12,49 @@ public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
     registrar.addMethodCallDelegate(instance, channel: channel)
   }
 
+  // TODO: need to handle different methods, not only "didBiometricsChanged"
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-      let context = LAContext()
+    print("start")
+     let context = LAContext()
       var authError : NSError?
-      
-      guard let data = getBiometricsTokenFromKeychain() else {
-        print("failed to read data")
-        return
-      }
-      print("data \(data)")
-      // let token = String(decoding: data, as: UTF8.self)
-      // print("token \(token)")
 
-      if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &authError) == false {
+    if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &authError) == false {
         result(FlutterError(code: "unknown", message: nil, details: nil))
         return
       }
+      print("after evaluating policy")
 
+    var currentToken: String?
       if let biometricsData = context.evaluatedPolicyDomainState {
             let base64Data = biometricsData.base64EncodedData()
             let token = String(data: base64Data, encoding: .utf8)
-            result(token)
+            currentToken = token
       } else {
+        print("failing evaluating policy")
         result(FlutterError(code: "unknown", message: nil, details: nil))
+        return
       }
+      print("after evaluating policy domain state \(currentToken)")
+
+      var savedToken = getBiometricsTokenFromKeychain()
+      if savedToken == nil {
+        print("saved token is nil so saving this one")
+        saveBiometricsTokenInKeychain(token: currentToken!)
+        // TODO: it is necessary to check the expected behavior in this case
+        result(false)
+        return
+      }
+
+      print("saved token - \(savedToken)")
+      print("current token - \(currentToken)")
+      print("checking tokens equality - \(savedToken! == currentToken!)")
+      // TODO: check for compliance and give the result, but if the tokens are not equal, then save a new one
+      result(savedToken! == currentToken!)
+      return
   }
 
     // TODO: I think need to make it private
     public func getBiometricsTokenFromKeychain() -> String? {
-      // TODO: delete comments
        let getQuery: [String: Any] = [
          kSecClass as String: kSecClassKey,
          kSecReturnData as String: kCFBooleanTrue,
@@ -57,7 +72,7 @@ public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
         return item == nil ? nil : String(decoding: (item! as? Data)!, as: UTF8.self)
     }
 
-    public func saveBiometricsTokenInKeyChain(token: String) {
+    public func saveBiometricsTokenInKeychain(token: String) {
       let addQuery: [String: Any] = [
         kSecClass as String: kSecClassKey,
         kSecValueData as String: token.data(using: .utf8)
