@@ -3,7 +3,6 @@ import UIKit
 import LocalAuthentication
 import Security
 
-// TODO: delete comments
 public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "biometrics_change_checker", binaryMessenger: registrar.messenger())
@@ -21,7 +20,6 @@ public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
     }
     
     private func didBiometricsChanged(result: @escaping FlutterResult) {
-        print("start")
         let context = LAContext()
         var authError : NSError?
         
@@ -29,7 +27,6 @@ public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
             result(FlutterError(code: "unknown", message: nil, details: nil))
             return
         }
-        print("after evaluating policy")
         
         var currentToken: String?
         if let biometricsData = context.evaluatedPolicyDomainState {
@@ -37,24 +34,17 @@ public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
             let token = String(data: base64Data, encoding: .utf8)
             currentToken = token
         } else {
-            print("failing evaluating policy")
             result(FlutterError(code: "unknown", message: nil, details: nil))
             return
         }
-        print("after evaluating policy domain state \(currentToken)")
         
         var savedToken = getBiometricsTokenFromKeychain()
         if savedToken == nil {
-            print("saved token is nil so saving this one")
             saveBiometricsTokenInKeychain(token: currentToken!)
             // TODO: it is necessary to check the expected behavior in this case
             result(false)
             return
         }
-        
-        print("saved token - \(savedToken)")
-        print("current token - \(currentToken)")
-        print("checking tokens equality - \(savedToken! == currentToken!)")
         
         let biometricsHasBeenChanged = savedToken! != currentToken!
         
@@ -70,14 +60,12 @@ public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
             kSecReturnData as String: kCFBooleanTrue,
             kSecMatchLimit as String: kSecMatchLimitOne
         ]
-        print("query compilation completed")
         
         var item: AnyObject?
         let gettingFromKeychainStatus = SecItemCopyMatching(
             getQuery as CFDictionary,
             &item
         )
-        print("getting item is completed\nitem - \(item)")
         
         return item == nil ? nil : String(decoding: (item! as? Data)!, as: UTF8.self)
     }
@@ -94,20 +82,17 @@ public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
         )
         
         guard addingToKeychainStatus != errSecDuplicateItem else {
-            print("duplicate")
+            // TODO: add throwing result(FlutterError)
             return
         }
         
         guard addingToKeychainStatus == errSecSuccess else {
-            print("unknown error \(addingToKeychainStatus)")
+            // TODO: add throwing result(FlutterError)
             return
         }
-        
-        print("saved successfully")
     }
     
     private func replaceBiometricsTokenInKeychain(token: String) {
-        print("replacement is needed")
         let receiveDataQuery: [String: Any] = [
             kSecClass as String: kSecClassKey
         ]
@@ -117,18 +102,15 @@ public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
         ]
         
         let status = SecItemUpdate(receiveDataQuery as CFDictionary, changeDataQuery as CFDictionary)
-        print(status)
         
         guard status != errSecItemNotFound else {
-            print("there is no such item")
+            // TODO: add throwing result(FlutterError)
             return
         }
         
         guard status == errSecSuccess else {
-            print("unknown error \(status)")
+            // TODO: add throwing result(FlutterError)
             return
         }
-        
-        print("changed successfully")
     }
 }
