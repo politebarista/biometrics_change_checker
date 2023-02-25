@@ -3,7 +3,6 @@ import UIKit
 import LocalAuthentication
 import Security
 
-// TODO: format the code
 // TODO: delete comments
 public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
     public static func register(with registrar: FlutterPluginRegistrar) {
@@ -12,8 +11,16 @@ public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
         registrar.addMethodCallDelegate(instance, channel: channel)
     }
     
-    // TODO: need to handle different methods, not only "didBiometricsChanged"
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        switch (call.method) {
+        case "didBiometricsChanged":
+            didBiometricsChanged(result: result)
+        default:
+            result(FlutterMethodNotImplemented)
+        }
+    }
+    
+    private func didBiometricsChanged(result: @escaping FlutterResult) {
         print("start")
         let context = LAContext()
         var authError : NSError?
@@ -51,14 +58,13 @@ public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
         
         let biometricsHasBeenChanged = savedToken! != currentToken!
         
-        if biometricsHasBeenChanged { replaceBiometricsToken(token: currentToken!) }
+        if biometricsHasBeenChanged { replaceBiometricsTokenInKeychain(token: currentToken!) }
         
         result(biometricsHasBeenChanged)
         return
     }
     
-    // TODO: I think need to make it private
-    public func getBiometricsTokenFromKeychain() -> String? {
+    private func getBiometricsTokenFromKeychain() -> String? {
         let getQuery: [String: Any] = [
             kSecClass as String: kSecClassKey,
             kSecReturnData as String: kCFBooleanTrue,
@@ -76,8 +82,31 @@ public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
         return item == nil ? nil : String(decoding: (item! as? Data)!, as: UTF8.self)
     }
     
-    // TODO: I think need to make it private
-    public func replaceBiometricsToken(token: String) {
+    private func saveBiometricsTokenInKeychain(token: String) {
+        let addQuery: [String: Any] = [
+            kSecClass as String: kSecClassKey,
+            kSecValueData as String: token.data(using: .utf8)
+        ]
+        
+        let addingToKeychainStatus = SecItemAdd(
+            addQuery as CFDictionary,
+            nil
+        )
+        
+        guard addingToKeychainStatus != errSecDuplicateItem else {
+            print("duplicate")
+            return
+        }
+        
+        guard addingToKeychainStatus == errSecSuccess else {
+            print("unknown error \(addingToKeychainStatus)")
+            return
+        }
+        
+        print("saved successfully")
+    }
+    
+    private func replaceBiometricsTokenInKeychain(token: String) {
         print("replacement is needed")
         let receiveDataQuery: [String: Any] = [
             kSecClass as String: kSecClassKey
@@ -101,30 +130,5 @@ public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
         }
         
         print("changed successfully")
-    }
-    
-    // TODO: I think need to make it private
-    public func saveBiometricsTokenInKeychain(token: String) {
-        let addQuery: [String: Any] = [
-            kSecClass as String: kSecClassKey,
-            kSecValueData as String: token.data(using: .utf8)
-        ]
-        
-        let addingToKeychainStatus = SecItemAdd(
-            addQuery as CFDictionary,
-            nil
-        )
-        
-        guard addingToKeychainStatus != errSecDuplicateItem else {
-            print("duplicate")
-            return
-        }
-        
-        guard addingToKeychainStatus == errSecSuccess else {
-            print("unknown error \(addingToKeychainStatus)")
-            return
-        }
-        
-        print("saved successfully")
     }
 }
