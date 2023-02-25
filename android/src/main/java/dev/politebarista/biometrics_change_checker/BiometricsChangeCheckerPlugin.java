@@ -23,10 +23,10 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 
 public class BiometricsChangeCheckerPlugin implements FlutterPlugin, MethodCallHandler {
-  private MethodChannel channel;
-
   private static final String TAG = "BiometricsChangeCheckerPlugin";
   private static final String keyName = "biometrics_change";
+
+  private MethodChannel channel;
 
   private Cipher getCipher() throws GeneralSecurityException {
     return Cipher.getInstance("AES/CBC/PKCS7Padding");
@@ -34,6 +34,8 @@ public class BiometricsChangeCheckerPlugin implements FlutterPlugin, MethodCallH
 
   @Override
   public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
+    Log.d(TAG, "attached to engine");
+
     channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), "biometrics_change_checker");
     channel.setMethodCallHandler(this);
   }
@@ -45,6 +47,7 @@ public class BiometricsChangeCheckerPlugin implements FlutterPlugin, MethodCallH
         boolean didBiometricsChanged = didBiometicsChanged();
         result.success(didBiometricsChanged);
       } catch (Exception e) {
+        Log.d(TAG, "Exception: " + e.getMessage());
         result.error("error", e.getMessage(), e);
       }
     } else {
@@ -74,7 +77,7 @@ public class BiometricsChangeCheckerPlugin implements FlutterPlugin, MethodCallH
       cipher.init(Cipher.ENCRYPT_MODE, key);
       return false;
     } catch (KeyPermanentlyInvalidatedException e) {
-      Log.d(TAG, "Exception: ${e,message}");
+      Log.d(TAG, "Biometrics setting was changed");
 
       keyStore.deleteEntry(keyName);
       generateKey();
@@ -85,14 +88,14 @@ public class BiometricsChangeCheckerPlugin implements FlutterPlugin, MethodCallH
 
   private void generateKey() throws GeneralSecurityException {
     KeyGenerator keyGenerator = KeyGenerator.getInstance("AES", "AndroidKeyStore");
-      keyGenerator.init(new KeyGenParameterSpec.Builder(
-          keyName,
-          KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
-          .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
-          .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
-          .setInvalidatedByBiometricEnrollment(true)
-          .setUserAuthenticationRequired(true)
-          .build());
-      keyGenerator.generateKey();
+    keyGenerator.init(new KeyGenParameterSpec.Builder(
+        keyName,
+        KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
+        .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
+        .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
+        .setInvalidatedByBiometricEnrollment(true)
+        .setUserAuthenticationRequired(true)
+        .build());
+    keyGenerator.generateKey();
   }
 }

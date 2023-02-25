@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:biometrics_change_checker/utils/biometrics_change_status.dart';
 import 'package:flutter/material.dart';
 import 'package:biometrics_change_checker/biometrics_change_checker.dart';
 

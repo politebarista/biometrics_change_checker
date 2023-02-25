@@ -1,8 +1,8 @@
-import 'package:biometrics_change_checker/utils/biometrics_change_status.dart';
+import 'package:biometrics_change_checker/src/utils/biometrics_change_status.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:biometrics_change_checker/biometrics_change_checker.dart';
-import 'package:biometrics_change_checker/biometrics_change_checker_platform_interface.dart';
-import 'package:biometrics_change_checker/biometrics_change_checker_method_channel.dart';
+import 'package:biometrics_change_checker/src/biometrics_change_checker.dart';
+import 'package:biometrics_change_checker/src/biometrics_change_checker_platform_interface.dart';
+import 'package:biometrics_change_checker/src/biometrics_change_checker_method_channel.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 class MockBiometricsChangeCheckerPlatform
