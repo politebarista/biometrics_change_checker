@@ -24,24 +24,22 @@ public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
         var authError : NSError?
         
         if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &authError) == false {
-            result(FlutterError(code: "unknown", message: nil, details: nil))
+            result(FlutterError(code: "biometrics is not registered on the device", message: nil, details: nil))
             return
         }
         
         var currentToken: String?
         if let biometricsData = context.evaluatedPolicyDomainState {
             let base64Data = biometricsData.base64EncodedData()
-            let token = String(data: base64Data, encoding: .utf8)
-            currentToken = token
+            currentToken = String(data: base64Data, encoding: .utf8)
         } else {
-            result(FlutterError(code: "unknown", message: nil, details: nil))
+            result(FlutterError(code: "an error occurred during evaluating policy domain state", message: nil, details: nil))
             return
         }
         
-        var savedToken = getBiometricsTokenFromKeychain()
+        let savedToken = getBiometricsTokenFromKeychain()
         if savedToken == nil {
             saveBiometricsTokenInKeychain(token: currentToken!)
-            // TODO: it is necessary to check the expected behavior in this case
             result(false)
             return
         }
@@ -75,7 +73,6 @@ public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
             kSecClass as String: kSecClassKey,
             kSecValueData as String: token.data(using: .utf8)
         ]
-        
         let addingToKeychainStatus = SecItemAdd(
             addQuery as CFDictionary,
             nil
@@ -85,7 +82,6 @@ public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
             // TODO: add throwing result(FlutterError)
             return
         }
-        
         guard addingToKeychainStatus == errSecSuccess else {
             // TODO: add throwing result(FlutterError)
             return
@@ -96,7 +92,6 @@ public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
         let receiveDataQuery: [String: Any] = [
             kSecClass as String: kSecClassKey
         ]
-        
         let changeDataQuery: [String: Any] = [
             kSecValueData as String: token.data(using: .utf8)
         ]
@@ -107,7 +102,6 @@ public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
             // TODO: add throwing result(FlutterError)
             return
         }
-        
         guard status == errSecSuccess else {
             // TODO: add throwing result(FlutterError)
             return
