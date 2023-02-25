@@ -48,8 +48,12 @@ public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
       print("saved token - \(savedToken)")
       print("current token - \(currentToken)")
       print("checking tokens equality - \(savedToken! == currentToken!)")
-      // TODO: check for compliance and give the result, but if the tokens are not equal, then save a new one
-      result(savedToken! == currentToken!)
+      
+      let biometricsHasBeenChanged = savedToken! != currentToken!
+      
+      if biometricsHasBeenChanged { replaceBiometricsToken(token: currentToken!) }
+      
+      result(biometricsHasBeenChanged)
       return
   }
 
@@ -72,6 +76,34 @@ public class SwiftBiometricsChangeCheckerPlugin: NSObject, FlutterPlugin {
         return item == nil ? nil : String(decoding: (item! as? Data)!, as: UTF8.self)
     }
 
+    // TODO: I think need to make it private
+    public func replaceBiometricsToken(token: String) {
+      print("replacement is needed")
+        let receiveDataQuery: [String: Any] = [
+            kSecClass as String: kSecClassKey
+        ]
+        
+        let changeDataQuery: [String: Any] = [
+            kSecValueData as String: token.data(using: .utf8)
+        ]
+        
+        let status = SecItemUpdate(receiveDataQuery as CFDictionary, changeDataQuery as CFDictionary)
+        print(status)
+        
+        guard status != errSecItemNotFound else {
+            print("there is no such item")
+            return
+        }
+        
+        guard status == errSecSuccess else {
+            print("unknown error \(status)")
+            return
+        }
+
+        print("changed successfully")
+    }
+    
+    // TODO: I think need to make it private
     public func saveBiometricsTokenInKeychain(token: String) {
       let addQuery: [String: Any] = [
         kSecClass as String: kSecClassKey,
