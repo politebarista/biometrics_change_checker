@@ -16,20 +16,17 @@ class MethodChannelBiometricsChangeChecker
 
   @override
   Future<BiometricsChangeStatus> didBiometricsChanged() async {
-    if(Platform.isAndroid) {
-    try {
-      final result =
-          await methodChannel.invokeMethod<bool>('didBiometricsChanged');
-      return result == true
-          ? BiometricsChangeStatus.changed
-          : BiometricsChangeStatus.notChanged;
-    } on PlatformException catch (e) {
-      log(e.message.toString());
-      return BiometricsChangeStatus.invalid;
-    } }
-    else if(Platform.isIOS) {
-      //TODO: ios
-      throw UnimplementedError();
+    if (Platform.isAndroid || Platform.isIOS) {
+      try {
+        final result =
+            await methodChannel.invokeMethod<bool>('didBiometricsChanged');
+        return result == true
+            ? BiometricsChangeStatus.changed
+            : BiometricsChangeStatus.notChanged;
+      } on PlatformException catch (e) {
+        log(e.message.toString());
+        return BiometricsChangeStatus.invalid;
+      }
     } else {
       throw UnimplementedError();
     }
